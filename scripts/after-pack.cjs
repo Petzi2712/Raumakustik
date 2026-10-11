@@ -13,7 +13,7 @@ module.exports=async(context)=>{
   }
   await walk(context.appOutDir);
   const escape=s=>s.replaceAll('$','$$').replaceAll('"','$\\"');
-  const source=escape(context.appOutDir.replaceAll('\\','/'));
+  const source=escape(context.appOutDir);
   const lines=[`!define ROOM_APP_DIR "${source}"`,'!macro DeleteInstalledApplication'];
   for(const f of files)lines.push(`  Delete "$INSTDIR\\${escape(f.replaceAll('/', '\\'))}"`);
   for(const d of directories.sort((a,b)=>b.split(path.sep).length-a.split(path.sep).length))lines.push(`  RMDir "$INSTDIR\\${escape(d.replaceAll('/', '\\'))}"`);

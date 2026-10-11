@@ -4,7 +4,7 @@
 !include "LogicLib.nsh"
 !include "FileFunc.nsh"
 !include "x64.nsh"
-!include "${PROJECT_DIR}/build/app-files.nsh"
+!include "${BUILD_RESOURCES_DIR}\app-files.nsh"
 !define ROOM_INSTALL_KEY "Software\${APP_ID}"
 !define ROOM_UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTALL_APP_KEY}"
 !define MUI_ABORTWARNING
@@ -42,7 +42,7 @@ Function .onInit
 FunctionEnd
 Section "Installieren"
   SetOutPath "$INSTDIR"
-  File /r "${ROOM_APP_DIR}/*"
+  File /r "${ROOM_APP_DIR}\*"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   WriteRegStr HKCU "${ROOM_INSTALL_KEY}" "InstallLocation" "$INSTDIR"
   WriteRegStr HKCU "${ROOM_UNINSTALL_KEY}" "DisplayName" "${PRODUCT_NAME}"
