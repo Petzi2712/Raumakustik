@@ -1,0 +1,9 @@
+node_modules/
+dist/
+release/
+*.log
+playwright-report/
+test-results/
+.env
+build/app-files.nsh
+docs/oberflaeche.png
