@@ -60,4 +60,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
-        run: gh release create "$RELEASE_TAG" artifacts/* --verify-tag --generate-notes --title "Raumakustik $RELEASE_TAG"
+        run: |
+          gh release create "$RELEASE_TAG" artifacts/* --verify-tag --generate-notes --title "Raumakustik $RELEASE_TAG" --notes "Erste Ausbaustufe für Windows 10/11 x64: 3D-Rechteckraum, Moden und Reflexionen, REW-Dateiimport und Analyseberichte. ChatGPT wird per manueller Browser-Übergabe genutzt; die direkte OpenAI-Verbindung benötigt einen separat abgerechneten API-Schlüssel. Der Installer ist noch nicht signiert. Installation und vollständige Updates auf einem Windows-PC sind noch nicht praktisch validiert. Physikalische Grenzen und offene Funktionen stehen in README.md und docs/ROADMAP.md."

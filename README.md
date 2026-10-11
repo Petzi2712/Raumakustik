@@ -1,10 +1,10 @@
 # Raumakustik Digital Twin
 
-Installierbarer lokaler Akustik-Arbeitsplatz für Windows 10/11 x64. Version **0.1.0** ist eine funktionsfähige erste Ausbaustufe des [Masterprompts](docs/MASTERPROMPT.txt), kein vollständiger wissenschaftlicher Hybrid-Solver.
+Installierbarer lokaler Akustik-Arbeitsplatz für Windows 10/11 x64. Version **0.1.1** ist eine funktionsfähige erste Ausbaustufe des [Masterprompts](docs/MASTERPROMPT.txt), kein vollständiger wissenschaftlicher Hybrid-Solver.
 
 ## Installieren und benutzen
 
-1. Den Windows-Installer unter [GitHub Releases](https://github.com/Petzi2712/Raumakustik/releases) herunterladen und `Raumakustik-0.1.0-x64-Setup.exe` ausführen. Falls dort noch kein Download erscheint, den Status unter [Actions](https://github.com/Petzi2712/Raumakustik/actions) prüfen: Der Build eines Versions-Tags erstellt und veröffentlicht die Installationsdateien. Die Installation erfolgt standardmäßig für das eigene Windows-Benutzerkonto; der Zielordner ist wählbar.
+1. Den Windows-Installer unter [GitHub Releases](https://github.com/Petzi2712/Raumakustik/releases) herunterladen und `Raumakustik-0.1.1-x64-Setup.exe` ausführen. Falls dort noch kein Download erscheint, den Status unter [Actions](https://github.com/Petzi2712/Raumakustik/actions) prüfen: Der Build eines Versions-Tags erstellt und veröffentlicht die Installationsdateien. Die Installation erfolgt standardmäßig für das eigene Windows-Benutzerkonto; der Zielordner ist wählbar.
 2. Raumabmessungen, Quellen, Empfänger und Materialwerte einstellen. Enter oder Verlassen des Zahlenfeldes übernimmt die Eingabe. Ursprung: vorn links am Boden; **X** nach rechts, **Y** zur Rückwand, **Z** nach oben; Meter.
 3. Unter **REW-Messungen** einen Frequenzgang als Text oder eine Mono-Impulsantwort als WAV/Text importieren. Messung einer Quelle und einem Empfänger zuordnen; Kalibrierung und Timing dokumentieren.
 4. **Akustikanalyse** zeigt Moden und Reflexionspfade. Gemessene IR und Abklingkurven erscheinen im Messungsbereich. Für Reflexionskandidaten denselben Quell-/Empfängerweg in der Analyse auswählen.
