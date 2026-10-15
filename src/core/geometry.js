@@ -129,10 +129,11 @@ export function boundarySurfaces(project,includeObjects=true){
       const floor=u=>a.floor+(b.floor-a.floor)*u,ceil=u=>a.ceiling+(b.ceiling-a.ceiling)*u;
       function panel(s,e,lo,hi,suffix=''){push(`${edge.id}${suffix}`,edge.id,[at(s,lo(s)),at(e,lo(e)),at(e,hi(e)),at(s,hi(s))],material,'wall',zone.id);}
       const o=edge.opening;
-      if(!o || o.open===false)panel(0,1,floor,ceil);
+      if(!o || (o.open===false&&!o.material))panel(0,1,floor,ceil);
       else{
         panel(0,o.start,floor,ceil,'-before');panel(o.end,1,floor,ceil,'-after');
         panel(o.start,o.end,floor,()=>o.bottom,'-below');panel(o.start,o.end,()=>o.top,ceil,'-above');
+        if(o.open===false&&o.material)push(`${edge.id}-pane`,edge.id,[at(o.start,o.bottom),at(o.end,o.bottom),at(o.end,o.top),at(o.start,o.top)],o.material,'wall',zone.id);
       }
     });
   }

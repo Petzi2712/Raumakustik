@@ -6,9 +6,9 @@ import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
 import {boundarySurfaces,roomBounds,containsPoint,acousticPosition} from '../core/geometry.js';
 import {modalPressure} from '../core/acoustics.js';
 const xyz=p=>new THREE.Vector3(p[0],p[2],-p[1]);
-export default function Scene({project,paths,mode,showPaths,showField,time,view,waveField,source=project.sources[0],receiver=project.receivers[0]}) {
-  const container=useRef(null), timeRef=useRef(time), [error,setError]=useState('');
-  timeRef.current=time;
+export default function Scene({project,paths,mode,showPaths,showField,time,view,waveField,cameraState,onMove,source=project.sources[0],receiver=project.receivers[0]}) {
+  const localCamera=useRef(null),moveRef=useRef(onMove),container=useRef(null), timeRef=useRef(time), [error,setError]=useState('');
+  timeRef.current=time;moveRef.current=onMove;const savedCamera=cameraState||localCamera;
   useEffect(()=>{
     const el=container.current;
     let renderer;
@@ -20,16 +20,21 @@ export default function Scene({project,paths,mode,showPaths,showField,time,view,
     scene.add(new THREE.AmbientLight(0xffffff,2));
     const light=new THREE.DirectionalLight(0xffffff,3);light.position.set(0,12,4);scene.add(light);
     const camera=new THREE.PerspectiveCamera(42,1,0.01,2000);
-    const controls=new OrbitControls(camera,renderer.domElement);controls.target.copy(xyz(center));controls.enableDamping=true;
+    const controls=new OrbitControls(camera,renderer.domElement);controls.target.copy(xyz(center));controls.enableDamping=false;
     const size=Math.max(w,d,h);
     if(view==='top') camera.position.set(w/2,h+size*1.6,-d/2+0.001);
     else if(view==='front') camera.position.set(w/2,h/2,size*1.5);
     else if(view==='side') camera.position.set(w+size*1.8,h/2,-d/2);
-    else if(view==='speaker'){camera.position.copy(xyz(acousticPosition(source)));controls.target.copy(xyz(receiver.position));}
-    else if(view==='firstperson'){camera.position.copy(xyz(receiver.position));controls.target.copy(xyz([center[0],bounds.min[1],receiver.position[2]]));}
-    else if(view==='listener'){camera.position.copy(xyz(receiver.position));controls.target.set(w/2,1,-0.1);}
+    else if(view==='speaker'&&source?.id&&receiver?.id){camera.position.copy(xyz(acousticPosition(source)));controls.target.copy(xyz(receiver.position));}
+    else if(view==='firstperson'&&receiver?.id){camera.position.copy(xyz(receiver.position));controls.target.copy(xyz([center[0],bounds.min[1],receiver.position[2]]));}
+    else if(view==='listener'&&receiver?.id){camera.position.copy(xyz(receiver.position));controls.target.set(w/2,1,-0.1);}
     else camera.position.set(w+size*0.55,h+size*0.45,size*0.65);
     if(!['listener','speaker','firstperson'].includes(view))camera.position.add(xyz(bounds.min));
+    if(savedCamera.current?.view===view){camera.position.fromArray(savedCamera.current.position);controls.target.fromArray(savedCamera.current.target);camera.zoom=savedCamera.current.zoom;camera.updateProjectionMatrix();}
+    function remember(){savedCamera.current={view,position:camera.position.toArray(),target:controls.target.toArray(),zoom:camera.zoom};renderer.domElement.dataset.camera=JSON.stringify(savedCamera.current);}
+    controls.addEventListener('end',remember);remember();
+    const wheel=e=>{if(!e.ctrlKey){e.preventDefault();e.stopImmediatePropagation();}};renderer.domElement.addEventListener('wheel',wheel,{capture:true,passive:false});
+    const draggables=[];
     for(const surface of boundarySurfaces(project)){
       const coords=[];for(let i=1;i<surface.points.length-1;i++)for(const p of [surface.points[0],surface.points[i],surface.points[i+1]])coords.push(p[0],p[2],-p[1]);
       const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(coords,3));geo.computeVertexNormals();
@@ -50,8 +55,15 @@ export default function Scene({project,paths,mode,showPaths,showField,time,view,
       const canvas=document.createElement('canvas');canvas.width=256;canvas.height=64;const c=canvas.getContext('2d');c.fillStyle=color;c.font='bold 28px sans-serif';c.textAlign='center';c.fillText(text,128,40);
       const map=new THREE.CanvasTexture(canvas),sprite=new THREE.Sprite(new THREE.SpriteMaterial({map,depthTest:false}));sprite.position.copy(position);sprite.scale.set(1.1,0.275,1);scene.add(sprite);
     }
-    project.sources.forEach(s=>{const obj=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.38,0.22),new THREE.MeshStandardMaterial({color:'#f9b55c'}));obj.position.copy(xyz(acousticPosition(s)));scene.add(obj);label(s.id,obj.position.clone().add(new THREE.Vector3(0,0.4,0)),'#ffc979');});
-    project.receivers.forEach(r=>{const obj=new THREE.Mesh(new THREE.SphereGeometry(0.105,16,16),new THREE.MeshStandardMaterial({color:'#5fdbc4'}));obj.position.copy(xyz(r.position));scene.add(obj);label(r.name,obj.position.clone().add(new THREE.Vector3(0,0.35,0)),'#5fdbc4');});
+    project.sources.forEach(s=>{const obj=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.38,0.22),new THREE.MeshStandardMaterial({color:'#f9b55c'}));obj.position.copy(xyz(acousticPosition(s)));scene.add(obj);obj.userData={key:'sources',id:s.id,position:s.position};draggables.push(obj);label(s.id,obj.position.clone().add(new THREE.Vector3(0,0.4,0)),'#ffc979');});
+    project.receivers.forEach(r=>{const obj=new THREE.Mesh(new THREE.SphereGeometry(0.105,16,16),new THREE.MeshStandardMaterial({color:'#5fdbc4'}));obj.position.copy(xyz(r.position));scene.add(obj);obj.userData={key:'receivers',id:r.id,position:r.position};draggables.push(obj);label(r.name,obj.position.clone().add(new THREE.Vector3(0,0.35,0)),'#5fdbc4');});
+    for(const seat of project.listeningPositions){if(project.receivers.some(r=>r.id===(seat.receiverId||seat.id)))continue;const obj=new THREE.Mesh(new THREE.SphereGeometry(.14,16,12),new THREE.MeshStandardMaterial({color:'#edf1ff',wireframe:true}));obj.position.copy(xyz(seat.position));obj.userData={key:'listeningPositions',id:seat.id,position:seat.position};scene.add(obj);draggables.push(obj);label(seat.name,obj.position.clone().add(new THREE.Vector3(0,.6,0)),'#edf1ff');}
+    const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();let dragging=null;
+    function ray(e){const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);}
+    function pointerDown(e){if(e.button!==0||!moveRef.current)return;ray(e);const hit=raycaster.intersectObjects(draggables)[0];if(!hit)return;e.stopImmediatePropagation();const obj=hit.object,plane=new THREE.Plane(new THREE.Vector3(0,1,0),-obj.position.y),point=new THREE.Vector3();raycaster.ray.intersectPlane(plane,point);dragging={obj,plane,start:obj.position.clone(),offset:obj.position.clone().sub(point)};controls.enabled=false;renderer.domElement.setPointerCapture(e.pointerId);}
+    function pointerMove(e){if(!dragging)return;e.stopImmediatePropagation();ray(e);const p=new THREE.Vector3();if(raycaster.ray.intersectPlane(dragging.plane,p))dragging.obj.position.copy(p.add(dragging.offset));}
+    function pointerUp(e){if(!dragging)return;e.stopImmediatePropagation();const d=dragging;dragging=null;controls.enabled=true;const delta=d.obj.position.clone().sub(d.start),pos=[d.obj.userData.position[0]+delta.x,d.obj.userData.position[1]-delta.z,d.obj.userData.position[2]].map(v=>Math.round(v*100)/100);d.obj.position.copy(d.start);if(delta.length()>.005&&e.type!=='pointercancel')moveRef.current?.(d.obj.userData.key,d.obj.userData.id,pos);}
+    const canvas=renderer.domElement;canvas.addEventListener('pointerdown',pointerDown,true);canvas.addEventListener('pointermove',pointerMove,true);canvas.addEventListener('pointerup',pointerUp,true);canvas.addEventListener('pointercancel',pointerUp,true);
     let numericalPoints=null,lastFrame=-1;const waveScale=waveField?.frames?.reduce((m,f)=>f.values.reduce((s,v)=>Math.max(s,Math.abs(v)),m),1e-15)||1;
     if(showField&&waveField?.frames?.length){const geo=new THREE.BufferGeometry(),coords=waveField.positions.flatMap(p=>[p[0],p[2],-p[1]]);geo.setAttribute('position',new THREE.Float32BufferAttribute(coords,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(coords.length),3));numericalPoints=new THREE.Points(geo,new THREE.PointsMaterial({vertexColors:true,size:.09,transparent:true,opacity:.65}));scene.add(numericalPoints);}
     const beads=[];
@@ -92,7 +104,7 @@ export default function Scene({project,paths,mode,showPaths,showField,time,view,
       if(view==='firstperson'&&keys.size){const direction=new THREE.Vector3();camera.getWorldDirection(direction);direction.y=0;direction.normalize();const side=new THREE.Vector3().crossVectors(direction,new THREE.Vector3(0,1,0));const delta=new THREE.Vector3();if(keys.has('w'))delta.addScaledVector(direction,.025);if(keys.has('s'))delta.addScaledVector(direction,-.025);if(keys.has('a'))delta.addScaledVector(side,-.025);if(keys.has('d'))delta.addScaledVector(side,.025);camera.position.add(delta);controls.target.add(delta);}
       controls.update();renderer.render(scene,camera);
     }render();
-    return()=>{disposed=true;window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);cancelAnimationFrame(frame);observer.disconnect();controls.dispose();scene.traverse(o=>{o.geometry?.dispose();if(o.material){for(const m of Array.isArray(o.material)?o.material:[o.material]){m.map?.dispose();m.dispose();}}});renderer.dispose();renderer.domElement.remove();};
+    return()=>{remember();disposed=true;canvas.removeEventListener('pointerdown',pointerDown,true);canvas.removeEventListener('pointermove',pointerMove,true);canvas.removeEventListener('pointerup',pointerUp,true);canvas.removeEventListener('pointercancel',pointerUp,true);canvas.removeEventListener('wheel',wheel,true);window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);cancelAnimationFrame(frame);observer.disconnect();controls.dispose();scene.traverse(o=>{o.geometry?.dispose();if(o.material){for(const m of Array.isArray(o.material)?o.material:[o.material]){m.map?.dispose();m.dispose();}}});renderer.dispose();renderer.domElement.remove();};
   },[project,paths,mode,showPaths,showField,view,waveField,source,receiver]);
   return <div className="scene" ref={container}>{error&&<p className="scene-error">{error}</p>}</div>;
 }

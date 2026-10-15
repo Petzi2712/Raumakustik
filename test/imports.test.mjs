@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseRewText,parseWav,measurementQuality} from '../src/core/imports.js';
-import {defaultProject,validateProject} from '../src/core/project.js';
+import {exampleProject as defaultProject,validateProject} from '../src/core/project.js';
 import {impulseMetrics,frequencyMetrics} from '../src/core/measurement.js';
 function wav(samples,{bits=16,format=1,channels=1,fs=48000}={}){
   const b=new ArrayBuffer(44+samples.length*bits/8),v=new DataView(b);

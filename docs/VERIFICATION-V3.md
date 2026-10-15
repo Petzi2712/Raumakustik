@@ -1,0 +1,15 @@
+# Verifikation 0.3.0 – 15.10.2026
+
+Ausgeführt in der Linux-Cloud-Umgebung. Diese Prüfungen ergänzen VERIFICATION-V2.md; sie ersetzen keine Messgeräte- oder Windows-Abnahme.
+
+- `npm run check`: 52 deterministische Fachtests und produktiver Vite-Build. Zusätzlich zu den bisherigen 45 Referenzen: leeres Projekt inklusive Speichern/Laden/Bericht/Moden; FFT-Rücktransformation; Sweep-Pegel und Eingabegrenzen; Dekonvolution eines synthetischen bekannten Zweipfad-Systems; Stille-/Referenzfehler; geschlossene Fensterfläche ohne doppelte Wandfläche; historischer Aufnahmeort und Veraltungsmarkierung.
+- Sweep-Referenz: 8 kHz, 0,5 s, 40–3000 Hz, bekannte Impulse bei 20 ms/50 ms mit Verhältnis 3:1. Rekonstruierte Positionen und Peak-Verhältnis werden geprüft. Komplexe Übertragungsfunktion gegen den analytischen Zweipfadfrequenzgang geprüft. Eine bandbegrenzte IR hat geringere Spitzenamplitude als ein idealer Dirac-Impuls; es wird kein unphysikalisch voller Peak vorausgesetzt.
+- `npm run test:ui`: bestehende Ende-zu-Ende-Funktionen einschließlich leerem Start, explizitem Beispiel, Messplan/Freigabe, FR/IR-Import, Migration, CAD, numerischer Simulation, Szenarien und Export.
+- `npm run test:editor`: 5×3×2,5 m aus Wandkarten; Fenster 2 m hoch bei 1 m Brüstung korrekt abgewiesen; passende Fenstermaße gespeichert; Drag-and-drop in real gerendertem 2D-/3D-Modell; Kamera bei Konfiguration und Tabwechsel erhalten; Mausrad ohne Strg wirkungslos, mit Strg wirksam; feste Menüleiste, unabhängig scrollende Paneele; Projekt vollständig zurückgesetzt.
+- `npm run test:audio`: produktives Electron mit file://, künstlichem Chromium-Mikrofon und normalen AudioWorklet-/Web-Audio-/Worker-Komponenten. Audiofreigabe und verweigerter Kamerazugriff über die tatsächlichen Electron-Permission-Handler (kein Fake-UI-Freigabeflag), Gerätewahl, Mikrofonpegel, Sweep-Scheduling, Aufnahme, Dekonvolution, zwei zugeordnete gespeicherte Messdatensätze, Warnung/Abbruch beim Positionswechsel und Bewahrung des Aufnahmeorts nach bestätigtem Verschieben. Kein physisches Mikrofon/Interface, keine gemessene Raumübertragung.
+- Gepackte Linux-App: produktive ASAR-Oberfläche, dynamische Rechenmodule und derselbe Audio-Integrationstest erfolgreich geprüft.
+- `npm run test:desktop`: isolierter Renderer, enge IPC, Projektdateien, echte PDF-Erzeugung, ChatGPT-Übergabe und Responses-Tool-Calling mit simuliertem Transport. Kein kostenpflichtiger API-Aufruf.
+
+Das Audio-Eingangsspektrum läuft lokal. Ohne echte Kalibrierung werden keine SPL-Messungen behauptet. Es gibt keine native ASIO-Schnittstelle und keine ASIO-Treiberinstallation durch die App. Das UR22MKII muss vom Windows-Treiber als Audioein-/ausgang bereitgestellt werden. Hardware, Kanaltrennung, Latenz, Dropouts, reale Messgenauigkeit und Windows-Installation/Upgrade bleiben praktisch zu prüfen.
+
+Der Installer wird im nativen Windows-GitHub-Workflow gebaut. Veröffentlichte Downloads erhalten SHA-256-Prüfsummen und SHA-512-Updatemetadaten. Erfolgreiches Bauen ist kein Nachweis einer manuell getesteten Installation. Die Anwendung ist weiterhin unsigniert.

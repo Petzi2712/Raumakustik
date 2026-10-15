@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaultProject,validateProject,parseProject,updateProvenance} from '../src/core/project.js';
+import {exampleProject as defaultProject,validateProject,parseProject,updateProvenance} from '../src/core/project.js';
 import {geometryPreset,geometrySummary,boundarySurfaces,containsPoint,visible,insideObject,zoneFromPoints,triangulate,roomBounds,measurementFingerprint,isRectangular,sub,dot,unit} from '../src/core/geometry.js';
 import {reflectionPaths,soundSpeed,airAbsorption} from '../src/core/acoustics.js';
 import {defaultPlanConfig,generatePlan,installPlan,approvePlan,planApproved,taskSummary,assignMeasurement,rebuildTasks,pointReferences} from '../src/core/planning.js';

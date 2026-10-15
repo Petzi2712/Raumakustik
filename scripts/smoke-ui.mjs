@@ -1,12 +1,14 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import {defaultProject} from '../src/core/project.js';
+import {exampleProject as defaultProject} from '../src/core/project.js';
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1480,height:1080}});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
   await page.goto(process.env.SMOKE_URL||'http://127.0.0.1:5173');
+  await page.getByRole('heading',{name:'Dein Raum beginnt leer.'}).waitFor();
+  await page.getByRole('button',{name:'Beispielprojekt laden',exact:true}).click();
   await page.getByText('Modell · keine Messung',{exact:false}).waitFor();
   assert.equal(await page.locator('canvas').count(),1);
   const width=page.getByRole('spinbutton',{name:'Breite X / m',exact:true});
@@ -30,6 +32,7 @@ try{
   const [csv]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'CSV',exact:true}).click()]);assert.match(await fs.readFile(await csv.path(),'utf8'),/M01/);
   await page.getByRole('button',{name:'Messplan prüfen & freigeben'}).click();
   await page.getByRole('button',{name:'Diese Aufgabe messen / importieren'}).click();
+  await page.getByText('Vorhandene REW-/WAV-Daten importieren',{exact:true}).click();
   await page.locator('input[accept=".txt,.csv,.wav"]').setInputFiles({name:'REW-L.txt',mimeType:'text/plain',buffer:Buffer.from('* REW frequency\n20 75 -10\n40 80 -20\n80 78 -40\n160 79 -50')});
   await page.getByRole('heading',{name:'REW-L.txt',exact:true}).waitFor();
   assert.ok(await page.getByText('Frequenzgang',{exact:true}).count()>0);
@@ -42,7 +45,7 @@ try{
   await page.locator('input[accept=".txt,.csv,.wav"]').setInputFiles({name:'REW-IR.txt',mimeType:'text/plain',buffer:Buffer.from(ir)});
   await page.getByRole('heading',{name:'REW-IR.txt',exact:true}).waitFor();
   await page.getByRole('button',{name:/Akustikanalyse/}).click();await page.getByLabel('Analyse-Empfänger',{exact:true}).selectOption(plannedReceiver);
-  await page.getByRole('button',{name:/REW-Messungen/}).click();
+  await page.getByRole('button',{name:/Direkte Messung/}).click();
   await page.getByText('5.00 ms',{exact:true}).waitFor();
   const [saved]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Projekt speichern',exact:true}).click()]);
   const path=await saved.path(),project=JSON.parse(await fs.readFile(path,'utf8'));
@@ -55,6 +58,7 @@ try{
   await page.getByRole('button',{name:/Raumeditor/}).click();
   await page.getByLabel('Raumform',{exact:true}).selectOption('L');await page.getByRole('button',{name:'Formvorlage übernehmen',exact:true}).click();
   await page.getByRole('heading',{name:'Geometrische Prüfung'}).waitFor();assert.ok(await page.locator('svg[aria-label="Freier Grundrisseditor"]').count());
+  await page.getByText('Wandpunkte & Winkel bearbeiten',{exact:true}).click();
   await page.getByRole('button',{name:'Wand teilen',exact:true}).click();assert.equal(await page.getByLabel('Wandpunkt',{exact:true}).locator('option').count(),7);
   await page.getByRole('button',{name:'Rückgängig',exact:true}).click();assert.equal(await page.getByLabel('Wandpunkt',{exact:true}).locator('option').count(),6);
   await page.screenshot({path:'/workspace/Raumakustik/docs/raumeditor-v2.png',fullPage:false});

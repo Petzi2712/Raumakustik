@@ -16,7 +16,7 @@ export function roomModes(dimensions, c, maxHz, source, receiver) {
     const frequency = c/2 * Math.hypot(...indices.map((n,i) => n/dimensions[i]));
     if (frequency > maxHz + 1e-9) continue;
     const mode = { indices, frequency, kind: ['','axial','tangential','oblique'][count], evidence: 'SIMULATED' };
-    mode.coupling = modalPressure(mode,source,dimensions) * modalPressure(mode,receiver,dimensions);
+    mode.coupling = source&&receiver?modalPressure(mode,source,dimensions) * modalPressure(mode,receiver,dimensions):null;
     result.push(mode);
   }
   return result.sort((a,b)=>a.frequency-b.frequency);

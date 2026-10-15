@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {defaultProject} from '../src/core/project.js';
+import {exampleProject as defaultProject} from '../src/core/project.js';
 import {buildToolContext} from '../src/core/report.js';
 const directory=await fs.mkdtemp(path.join(os.tmpdir(),'raumakustik-packaged-'));
 let app;

@@ -7,7 +7,7 @@ import http from 'node:http';
 import {buildToolContext} from '../src/core/report.js';
 import {defaultPlanConfig,generatePlan,installPlan,approvePlan,assignMeasurement} from '../src/core/planning.js';
 import {reportHtml} from '../src/core/exports.js';
-import {defaultProject} from '../src/core/project.js';
+import {exampleProject as defaultProject} from '../src/core/project.js';
 const directory=await fs.mkdtemp(path.join(os.tmpdir(),'raumakustik-smoke-'));
 const server=http.createServer((req,res)=>{if(req.url==='/measurements'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify([{id:'test-1',title:'Fixture measurement'}]));}else{res.statusCode=404;res.end();}});
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));

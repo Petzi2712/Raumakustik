@@ -1,7 +1,7 @@
 {
   "name": "raumakustik-digital-twin",
-  "version": "0.2.1",
-  "description": "Lokaler 3D-Raumakustik-Arbeitsplatz mit REW-Import",
+  "version": "0.3.0",
+  "description": "3D-Raumakustik mit direkter Sweep-Messung, Pegelabgleich und KI-Analyse",
   "author": "Raumakustik",
   "private": true,
   "main": "electron/main.cjs",
@@ -14,7 +14,9 @@
     "dist:win": "npm run check && electron-builder --win nsis --x64 --publish never",
     "dist:linux": "npm run build && electron-builder --linux dir",
     "test:ui": "node scripts/smoke-ui.mjs",
-    "test:desktop": "node scripts/smoke-desktop.mjs"
+    "test:desktop": "node scripts/smoke-desktop.mjs",
+    "test:editor": "node scripts/smoke-editor.mjs",
+    "test:audio": "bash scripts/with-display.sh node scripts/smoke-audio.mjs"
   },
   "dependencies": {
     "electron-updater": "6.8.9",
@@ -26,8 +28,8 @@
     "@vitejs/plugin-react": "6.1.2",
     "electron": "44.7.0",
     "electron-builder": "26.15.3",
-    "vite": "8.3.4",
-    "playwright": "1.64.0"
+    "playwright": "1.64.0",
+    "vite": "8.3.4"
   },
   "build": {
     "appId": "de.raumakustik.digitaltwin",

@@ -8,7 +8,7 @@ export const SURFACES = [
   { id: 'floor', label: 'Boden', axis: 2, side: 0 },
   { id: 'ceiling', label: 'Decke', axis: 2, side: 1 },
 ];
-export function defaultProject() {
+export function exampleProject() {
   return {
     schemaVersion: 2, analysisSettings:{reflectionOrder:2}, simulationRuns:[], units:'m', coordinates:'X right, Y rear, Z up', objects:[], scenarios:[], planHistory:[], listeningPositions:[{id:'seat-1',name:'Haupt-Hörplatz',position:[2.4,3.7,1.2]}], name: 'Mein Hörraum',
     room: { dimensions: [4.8, 6.2, 2.7], temperature: 20, humidity: 50, pressure: 101325,
@@ -25,6 +25,11 @@ export function defaultProject() {
     receivers: [{ id: 'M1', name: 'Hörplatz', position: [2.4, 3.7, 1.2] }],
     measurements: [], profile: 'critical', notes: '',
   };
+}
+export function defaultProject() {
+  const p=exampleProject();
+  p.name='Neuer Raum';p.sources=[];p.receivers=[];p.listeningPositions=[];
+  return p;
 }
 function finiteRange(n, min, max, label) {
   if (!Number.isFinite(n) || n < min || n > max) throw new Error(`${label}: Wert muss zwischen ${min} und ${max} liegen.`);
@@ -51,7 +56,7 @@ export function validateProject(p) {
     material.absorption.forEach((v, i) => { if (v + material.transmission[i] > 1) throw new Error('Absorption + Transmission darf 1 nicht überschreiten.'); });
   }
   for (const key of ['sources', 'receivers']) {
-    if (!Array.isArray(p[key]) || p[key].length < 1 || p[key].length > (key==='sources'?64:2048)) throw new Error(`${key}: 1–32 Positionen benötigt.`);
+    if (!Array.isArray(p[key]) || p[key].length > (key==='sources'?64:2048)) throw new Error(`${key}: Maximale Positionszahl überschritten.`);
     const ids = new Set();
     for (const item of p[key]) {
       if (typeof item.id !== 'string' || ids.has(item.id)) throw new Error('Positions-IDs müssen eindeutig sein.');
@@ -83,9 +88,9 @@ export function validateProject(p) {
     if(typeof o.id!=='string'||typeof o.name!=='string'||!Array.isArray(o.position)||o.position.length!==3||!o.position.every(v=>Number.isFinite(v)&&Math.abs(v)<=100)||!Array.isArray(o.size)||o.size.length!==3||!o.size.every(v=>Number.isFinite(v)&&v>=.01&&v<=100)||!Number.isFinite(o.rotation??0))throw new Error('Ungültiges Raumobjekt.');
     if(o.model && (typeof o.model.data!=='string'||o.model.data.length>8000000||!['glb','gltf','obj'].includes(o.model.format)))throw new Error('Ungültiges 3D-Modell.');
   }
-  const materials=[...(p.room.zones||[]).flatMap(z=>[...Object.values(z.materials||{}),...z.edges.map(e=>e.material).filter(Boolean)]),...p.objects.map(o=>o.material).filter(Boolean)];
+  const materials=[...(p.room.zones||[]).flatMap(z=>[...Object.values(z.materials||{}),...z.edges.flatMap(e=>[e.material,e.opening?.material]).filter(Boolean)]),...p.objects.map(o=>o.material).filter(Boolean)];
   for(const m of materials){for(const field of ['absorption','scattering','transmission']){if(!Array.isArray(m[field])||m[field].length!==BANDS.length)throw new Error('Material benötigt sechs Oktavwerte.');m[field].forEach(v=>finiteRange(v,0,1,'Materialkoeffizient'));}if(m.absorption.some((v,i)=>v+m.transmission[i]>1))throw new Error('Absorption + Transmission darf 1 nicht überschreiten.');}
-  if(!Array.isArray(p.listeningPositions)||p.listeningPositions.length<1||p.listeningPositions.length>32)throw new Error('1–32 Hörplätze erforderlich.');
+  if(!Array.isArray(p.listeningPositions)||p.listeningPositions.length>32)throw new Error('Maximal 32 Hörplätze.');
   for(const r of p.listeningPositions)if(typeof r.id!=='string'||typeof r.name!=='string'||!Array.isArray(r.position)||r.position.length!==3||!r.position.every(v=>Number.isFinite(v)&&Math.abs(v)<=100))throw new Error('Ungültiger Hörplatz.');
   if(!Array.isArray(p.scenarios)||p.scenarios.length>30)throw new Error('Maximal 30 Szenarien.');
   for(const s of p.scenarios){if(typeof s.id!=='string'||typeof s.name!=='string'||!s.model||s.model.schemaVersion!==2||s.model.scenarios?.length)throw new Error('Ungültiges Szenario.');validateProject(s.model);}

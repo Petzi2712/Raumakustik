@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaultProject,validateProject,parseProject,bandValue} from '../src/core/project.js';
+import {exampleProject as defaultProject,validateProject,parseProject,bandValue} from '../src/core/project.js';
 import {soundSpeed,roomModes,modalPressure,reflectionPaths,reverberation,distance,matchReflections} from '../src/core/acoustics.js';
 const near=(a,b,t=1e-8)=>assert.ok(Math.abs(a-b)<t,`${a} != ${b}`);
 test('Schallgeschwindigkeit und bekannte axiale Eigenfrequenz',()=>{

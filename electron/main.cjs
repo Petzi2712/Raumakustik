@@ -27,7 +27,10 @@ app.whenReady().then(()=>{
   mainWindow.setMenuBarVisibility(false);
   mainWindow.webContents.setWindowOpenHandler(()=>({action:'deny'}));
   mainWindow.webContents.on('will-navigate',e=>e.preventDefault());
-  mainWindow.webContents.session.setPermissionRequestHandler((_webContents,_permission,callback)=>callback(false));
+  const appUrl=require('node:url').pathToFileURL(path.join(__dirname,'../dist/index.html')).href;
+  const fromApp=wc=>wc===mainWindow?.webContents&&wc.getURL().split('#')[0]===appUrl;
+  mainWindow.webContents.session.setPermissionCheckHandler((wc,permission,_origin,details)=>fromApp(wc)&&((permission==='media'&&details.mediaType==='audio')||permission==='speaker-selection'));
+  mainWindow.webContents.session.setPermissionRequestHandler((wc,permission,callback,details)=>callback(fromApp(wc)&&details.isMainFrame===true&&((permission==='media'&&details.mediaTypes?.length>0&&details.mediaTypes.every(t=>t==='audio'))||permission==='speaker-selection')));
   mainWindow.loadFile(path.join(__dirname,'../dist/index.html'));
   handle('app:info',()=>({version:app.getVersion(),packaged:app.isPackaged,platform:process.platform}));
   handle('project:open',async()=>{

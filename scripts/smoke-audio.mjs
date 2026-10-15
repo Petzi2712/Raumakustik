@@ -1,0 +1,43 @@
+import {_electron as electron} from 'playwright';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+const directory=await fs.mkdtemp(path.join(os.tmpdir(),'raum-audio-'));
+let app;
+try{
+  const packaged=process.env.PACKAGED_EXECUTABLE;
+  app=await electron.launch({...(packaged?{executablePath:packaged}:{}),args:[...(packaged?[]:['.']),'--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader','--use-fake-device-for-media-stream'],env:{...process.env,XDG_CONFIG_HOME:directory,XDG_CACHE_HOME:directory}});
+  const page=await app.firstWindow(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.getByRole('heading',{name:'Dein Raum beginnt leer.'}).waitFor();
+  assert.equal(await page.evaluate(async()=>{try{const stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});stream.getTracks().forEach(t=>t.stop());return 'granted';}catch{return 'denied';}}),'denied');
+  await page.getByRole('button',{name:'Beispielprojekt laden',exact:true}).click();
+  await page.getByRole('button',{name:/Direkte Messung/}).click();
+  await page.getByRole('button',{name:'Audio verbinden / Geräte laden',exact:true}).click();
+  await page.getByRole('button',{name:'Audio trennen',exact:true}).waitFor({timeout:20000});
+  await page.getByRole('meter',{name:'Mikrofonpegel dBFS'}).waitFor();
+  assert.ok(await page.getByLabel('Audioeingang',{exact:true}).locator('option').count()>1);
+  await page.getByLabel('Sweep-Dauer / s',{exact:true}).fill('1');
+  await page.getByRole('button',{name:'Sweep am Messpunkt starten',exact:true}).click();
+  await page.getByRole('heading',{name:/Sweep IR ·/}).waitFor({timeout:25000});
+  const file=path.join(directory,'audio.raum');
+  await app.evaluate(({dialog},file)=>dialog.showSaveDialog=async()=>({canceled:false,filePath:file}),file);
+  await page.getByRole('button',{name:'Projekt speichern',exact:true}).click();
+  await page.getByRole('status').filter({hasText:'Projekt gespeichert.'}).waitFor();
+  const project=JSON.parse(await fs.readFile(file,'utf8'));
+  assert.equal(project.measurements.length,2);
+  for(const m of project.measurements){assert.equal(m.metadata.acquisition,'internal-log-sweep');assert.equal(m.metadata.receiverId,'M1');assert.equal(m.metadata.sourceId,'L');assert.equal(m.metadata.timingReference,false);assert.equal(m.metadata.splCalibration,false);assert.ok(m.data.length>100);assert.deepEqual(m.metadata.positionAtAcquisition,project.receivers[0].position);}
+  await page.getByRole('button',{name:'Audio trennen',exact:true}).click();
+  await page.screenshot({path:path.join(directory,'audio.png')});
+  await page.getByRole('button',{name:/Projekt & Quellen/}).click();
+  const pos=page.getByRole('spinbutton',{name:'Hörplatz X / m',exact:true});
+  await pos.fill('2.6');
+  let dialogText='';page.once('dialog',async d=>{dialogText=d.message();await d.dismiss();});await pos.press('Tab');
+  assert.match(dialogText,/Messpunkt bereits gemessen/);assert.equal(await pos.inputValue(),'2.4');
+  await pos.fill('2.6');page.once('dialog',d=>d.accept());await pos.press('Tab');
+  await page.getByRole('button',{name:'Projekt speichern',exact:true}).click();
+  await page.getByRole('status').filter({hasText:'Projekt gespeichert.'}).waitFor();
+  const moved=JSON.parse(await fs.readFile(file,'utf8'));assert.equal(moved.measurements[0].metadata.geometryStale,true);assert.equal(moved.measurements[0].metadata.positionAtAcquisition[0],2.4);
+  assert.deepEqual(errors,[]);
+  console.log('Audio smoke passed: fake Chromium microphone only; real AudioWorklet capture, live meter, sweep playback scheduling, worker deconvolution, IR/FR point binding, save, measured-position warning/cancel and historical-position preservation. No physical interface tested.');
+}finally{if(app){await app.evaluate(()=>{for(const w of require('electron').BrowserWindow.getAllWindows())w.destroy();}).catch(()=>{});await app.close();}await fs.rm(directory,{recursive:true,force:true});}
