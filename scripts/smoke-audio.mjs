@@ -17,6 +17,11 @@ try{
   await page.getByRole('button',{name:'Audio trennen',exact:true}).waitFor({timeout:20000});
   await page.getByRole('meter',{name:'Mikrofonpegel dBFS'}).waitFor();
   assert.ok(await page.getByLabel('Audioeingang',{exact:true}).locator('option').count()>1);
+  await page.getByRole('button',{name:'Sweep am Messpunkt starten',exact:true}).click();
+  await page.getByRole('button',{name:'Sweep abbrechen',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Sweep abbrechen',exact:true}).click();
+  await page.getByRole('button',{name:'Sweep am Messpunkt starten',exact:true}).waitFor();
+  await page.waitForFunction(()=>Array.from(document.querySelectorAll('button')).some(b=>b.textContent==='Sweep am Messpunkt starten'&&!b.disabled));
   await page.getByLabel('Sweep-Dauer / s',{exact:true}).fill('1');
   await page.getByRole('button',{name:'Sweep am Messpunkt starten',exact:true}).click();
   await page.getByRole('heading',{name:/Sweep IR ·/}).waitFor({timeout:25000});
@@ -39,5 +44,5 @@ try{
   await page.getByRole('status').filter({hasText:'Projekt gespeichert.'}).waitFor();
   const moved=JSON.parse(await fs.readFile(file,'utf8'));assert.equal(moved.measurements[0].metadata.geometryStale,true);assert.equal(moved.measurements[0].metadata.positionAtAcquisition[0],2.4);
   assert.deepEqual(errors,[]);
-  console.log('Audio smoke passed: fake Chromium microphone only; real AudioWorklet capture, live meter, sweep playback scheduling, worker deconvolution, IR/FR point binding, save, measured-position warning/cancel and historical-position preservation. No physical interface tested.');
+  console.log('Audio smoke passed: fake Chromium microphone only; real AudioWorklet capture, live meter, sweep playback scheduling, worker deconvolution, abort/restart without saving cancelled data, IR/FR point binding, save, measured-position warning/cancel and historical-position preservation. No physical interface tested.');
 }finally{if(app){await app.evaluate(()=>{for(const w of require('electron').BrowserWindow.getAllWindows())w.destroy();}).catch(()=>{});await app.close();}await fs.rm(directory,{recursive:true,force:true});}

@@ -1,6 +1,6 @@
 {
   "name": "raumakustik-digital-twin",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "3D-Raumakustik mit direkter Sweep-Messung, Pegelabgleich und KI-Analyse",
   "author": "Raumakustik",
   "private": true,

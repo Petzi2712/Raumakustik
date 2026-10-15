@@ -1,4 +1,4 @@
-# Raumakustik Digital Twin · 0.3.0
+# Raumakustik Digital Twin · 0.3.1
 
 Windows-Anwendung für freie Raumgeometrien, räumliche Messplanung, direkte Sweep-Messung und nachvollziehbare Akustikanalyse. Neue Projekte starten ohne Lautsprecher, Hörplätze, Möbel und Messdaten. Alte `.raum`-Projekte bleiben lesbar; Schema 1 wird beim Öffnen zu Schema 2 migriert.
 
@@ -66,7 +66,7 @@ Materialwerte für KI-Behandlungsvorschläge müssen mit ihrer angegebenen Herku
 
 ## Installation, Updates und Validierung
 
-Windows 10/11 x64. Installer: `Raumakustik-0.3.0-x64-Setup.exe`. Installation pro Benutzer mit wählbarem Ordner. Das Programm bleibt **unsigniert**; SmartScreen kann warnen. Eine vertrauenswürdige Herausgebersignatur ist noch einzurichten.
+Windows 10/11 x64. Installer: `Raumakustik-0.3.1-x64-Setup.exe`. Installation pro Benutzer mit wählbarem Ordner. Das Programm bleibt **unsigniert**; SmartScreen kann warnen. Eine vertrauenswürdige Herausgebersignatur ist noch einzurichten.
 
 GitHub Releases liefern Installer, Blockmap und `latest.yml`. Der Updater lädt auf ausdrücklichen Klick; vor dem Neustart Projekte speichern. Die Veröffentlichungspipeline und Downloadintegrität werden geprüft. Native Installation/Deinstallation, DPAPI und ein tatsächliches Upgrade auf einem Windows-PC sind weiterhin separat zu validieren.
 
