@@ -46,7 +46,7 @@ export function impulseMetrics(m) {
   }
   return {peakIndex, timeOrigin:m.data[peakIndex][0],snrDb,decay,peaks:peaks.slice(0,100),
     edt:fit(0,-10,20),t20:fit(-5,-25,35),t30:fit(-5,-35,45),c50:clarity(e50),c80:clarity(e80),d50:e50/total,centreTime:centre,
-    evidence:'Calculated', notes:'Breitbandige Auswertung aus Messdaten; IR-Maximum dient als vermuteter Direktschall. Kein bandbegrenztes RT60, keine automatische Timing-Korrektur. Schroeder-Integration ohne Rauschkompensation: nur belastbare Fits werden angezeigt.'};
+    evidence:'MEASURED',derived:true, notes:'Breitbandige Auswertung aus Messdaten; IR-Maximum dient als vermuteter Direktschall. Kein bandbegrenztes RT60, keine automatische Timing-Korrektur. Schroeder-Integration ohne Rauschkompensation: nur belastbare Fits werden angezeigt.'};
 }
 export function frequencyMetrics(m) {
   if(m.kind!=='frequency' || !m.data.every(row=>row.length===3)) return null;
@@ -60,5 +60,16 @@ export function frequencyMetrics(m) {
     const left=unwrapped[Math.max(0,i-1)],right=unwrapped[Math.min(unwrapped.length-1,i+1)];
     return [row[0],-(right[1]-left[1])/360/(right[0]-left[0])*1000];
   });
-  return {unwrapped,groupDelay,evidence:'Calculated',notes:'Numerische Phasenableitung; Auflösung und Timing der Messung bestimmen die Aussagekraft.'};
+  return {unwrapped,groupDelay,evidence:'MEASURED',derived:true,notes:'Numerische Phasenableitung; Auflösung und Timing der Messung bestimmen die Aussagekraft.'};
+}
+// Hann-windowed STFT of the imported linear impulse response. Relative dB only.
+export function impulseSpectrogram(m,{windowSize=4096,maxFrames=48}={}){
+  if(m.kind!=='impulse'||m.data.length<256)return null;
+  const size=2**Math.floor(Math.log2(Math.min(windowSize,m.data.length))),fs=m.sampleRate;
+  function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]];}}for(let len=2;len<=n;len<<=1){const angle=-2*Math.PI/len;for(let start=0;start<n;start+=len)for(let j=0;j<len/2;j++){const c=Math.cos(angle*j),s=Math.sin(angle*j),a=start+j,b=a+len/2,tr=re[b]*c-im[b]*s,ti=re[b]*s+im[b]*c;re[b]=re[a]-tr;im[b]=im[a]-ti;re[a]+=tr;im[a]+=ti;}}}
+  const bins=[];for(let f=Math.max(20,fs/size);f<Math.min(20000,fs/2);f*=2**(1/12)){const index=Math.round(f*size/fs);if(!bins.some(b=>b.index===index))bins.push({index,frequency:f,low:Math.max(1,Math.ceil(f/2**(1/24)*size/fs)),high:Math.min(size/2-1,Math.floor(f*2**(1/24)*size/fs))});}
+  const frames=[],last=m.data.length-size,hop=Math.max(size/4,Math.ceil(last/Math.max(1,maxFrames-1)));let max=0;
+  for(let start=0;start<=last;start+=hop){const re=new Float64Array(size),im=new Float64Array(size);for(let i=0;i<size;i++)re[i]=m.data[start+i][1]*(.5-.5*Math.cos(2*Math.PI*i/(size-1)));fft(re,im);const amplitudes=bins.map(b=>{let power=0;const low=b.low<=b.high?b.low:b.index,high=b.low<=b.high?b.high:b.index;for(let i=low;i<=high;i++)power+=re[i]**2+im[i]**2;return Math.sqrt(power);});max=Math.max(max,...amplitudes);frames.push({time:(m.data[start][0]+m.data[start+size-1][0])/2,values:amplitudes});}
+  for(const frame of frames)frame.values=frame.values.map(v=>20*Math.log10(Math.max(v/Math.max(max,1e-30),1e-6)));
+  return {bins:bins.map(b=>b.frequency),bands:bins.map(b=>({lowHz:Math.min(b.low,b.high)*fs/size,highHz:Math.max(b.low,b.high)*fs/size})),frames,windowSize:size,frequencyResolution:fs/size,evidence:'MEASURED',notes:'Hann-STFT mit 1/12-Oktav-Leistungssummen (mindestens ein FFT-Bin); dB relativ zum globalen Spektrogrammmaximum. Zeit ist die Fenstermitte im unveränderten IR-Zeitbezug, keine automatische Timing-Korrektur.'};
 }

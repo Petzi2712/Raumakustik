@@ -55,9 +55,9 @@ test('Bandinterpolation logarithmisch, Projektvalidierung schützt Grenzen',()=>
   p.room.dimensions[0]=0;assert.throws(()=>validateProject(p),/Raumabmessung/);
   const p2=defaultProject();p2.room.surfaces.left.transmission.fill(1);assert.throws(()=>validateProject(p2),/Transmission/);
 });
-test('Confidence hält Mehrdeutigkeit und Zuordnungen als Hypothese',()=>{
+test('Qualitative Reflexionszuordnung hält Mehrdeutigkeit ohne Wahrscheinlichkeitsprozente',()=>{
   const matches=matchReflections([{delayMs:5,relativeDb:-8}],[{id:'a',order:1,delayMs:5},{id:'b',order:1,delayMs:5.2}]);
-  assert.equal(matches[0].evidence,'Inferred');assert.equal(matches[0].candidates.length,2);assert.equal(matches[0].candidates[0].confidence,60);
+  assert.equal(matches[0].evidence,'INFERRED');assert.equal(matches[0].candidates.length,2);assert.equal(matches[0].candidates[0].timeErrorMs,0);assert.equal(matches[0].candidates[0].confidenceLevel,'zeitlich passend');assert.equal('confidence' in matches[0].candidates[0],false);
 });
 test('Koinzidente Quell- und Empfängerpositionen werden nicht berechnet',()=>{
   const p=defaultProject();assert.throws(()=>reflectionPaths(p,p.sources[0],{id:'M',position:p.sources[0].position},100),/Abstand/);

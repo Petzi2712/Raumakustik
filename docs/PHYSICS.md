@@ -1,45 +1,37 @@
-# Rechenmodell und Aussagegrenzen v0.1
+# Physikalische Modelle und Grenzen · 0.2
 
-Alle Längen in Metern, Frequenzen in Hz, Laufzeiten im Datenmodell in ms, Text-IR-Zeiten intern in Sekunden.
+Alle Positionen in Metern, X rechts/Y nach hinten/Z nach oben. Volumen aus triangulierter Grundfläche und linear interpolierter Boden-/Deckenhöhe: V = Summe A_Dreieck × mittlere freie Höhe. Oberflächen aus 3D-Dreiecksflächen. Zonen müssen disjunkt sein; Überschneidungen werden nicht als Volumensumme akzeptiert. Kurven sind explizite polygonale Näherungen mit dokumentiertem Radius, Mittelpunkt und maximalem Sehnenfehler.
 
-## Moden
+## Geometrische Akustik
 
-`f(p,q,r) = c/2 sqrt((p/X)^2 + (q/Y)^2 + (r/Z)^2)` mit nichtnegativen ganzen Indizes, mindestens einer ungleich null. Eine/zwei/drei aktive Achsen ergeben axiale/tangentiale/oblique Eigenmoden. Starre Grenzflächen: `P(x,y,z) = cos(pπx/X) cos(qπy/Y) cos(rπz/Z)`. Quell- und Empfängerfaktoren werden multipliziert. Das visualisierte Feld ist normiert und enthält keine zeitliche oder frequenzabhängige Modenüberlagerung. Kein absoluter SPL, keine Dämpfung und kein Q ohne belastbare Messung.
+Allgemeines Image-Source-Verfahren an begrenzten planaren Flächen. Für jede Wandsequenz werden Bilderquellen rekonstruiert und Reflexionspunkte rückwärts geschnitten. Punkte müssen auf den tatsächlichen Flächen liegen, auf der richtigen Materialseite ankommen und alle Teilstrecken müssen sichtbar sein. Öffnungen enthalten keine reflektierenden Teilflächen. Parametrische, um Z gedrehte Boxen können abschatten. Hintereinanderliegende Flächen werden nicht durch eine imaginäre Rechteckhülle ersetzt.
 
-Trockene-Luft-Näherung: `c = 331.3 sqrt(1 + T/273.15)`. Relative Feuchte und Luftdruck werden gespeichert, sind noch nicht in Schallgeschwindigkeit oder Luftabsorption umgesetzt. Parameterlimits schützen vor ungültigen Geometrien und unbegrenzter Rechenlast: Abmessungen 1–30 m, Temperatur −10–40 °C, Moden bis 200 Hz.
+Maximal Ordnung 4; maximale vollständige Kandidatenzahl 20.000. Der Solver reduziert die Ordnung bei zu vielen Flächen (über 96 Teilflächen nur Ordnung 1). Die tatsächlich verwendete Grenze erscheint im Analysebereich. Höhere Ordnungen werden nicht als berechnet behauptet.
 
-## Reflexionen
+Druck relativ zum geometrischen Direktschall:
 
-Sechs begrenzte ebene Raumflächen. Quellspiegelung entlang jeder zulässigen Sequenz bis Ordnung 2; Rückverfolgung der Schnittpunkte vom Empfänger; Pfade außerhalb der Flächen oder mit degenerierten Ecktreffern werden ausgeschlossen. Normale und tangentiale Komponenten erfüllen das Reflexionsgesetz. Laufzeit = Gesamtweg/c plus Quell-Delay; relative Verzögerung = Wegdifferenz/c.
+`p/p_direct = r_direct/r_path × Produkt sqrt(1−α−τ) sqrt(1−s) × 10^(−a_air Δr/20)`.
 
-Pegel relativ zum direkten Pfad:
+Für allgemeine Geometrie berücksichtigt die Luftabsorptionsnäherung nach ISO 9613 Temperatur, Druck und relative Feuchte. Der übernommene Rechteck-Spezialfall aus 0.1 behält sein Referenzmodell ohne Luftverlust bei. Die Schallgeschwindigkeit ist weiterhin die dokumentierte Trockenluftnäherung `c = 331,3 sqrt(1 + T/273,15)`.
 
-`20 log10[(direkter Weg / Gesamtweg) × Produkt(sqrt(1−α−τ) sqrt(1−s))]`.
+`Δt = (r_path−r_direct)/c`, `f_null = c/(2 Δr)` als idealisierter SBIR-Kandidat bei phasengleicher Druckreflexion. Materialphase, frequenzabhängige Lautsprecherdirektivität, diffuse Energie und Beugung sind nicht in dieser ISM-Pegelprognose validiert. Geometrische Facetten bilden insbesondere keine validierte gekrümmte Fokussierungs-/Energiebilanz. Das Programm prüft den Sehnenfehler gegen λ/12 und lehnt zu grobe Kurven für die gewählte Frequenz ab.
 
-α ist Energieabsorption, τ Energietransmission, s Streuung des verbleibenden spekularen Anteils. Parameter werden zwischen 125/250/500/1000/2000/4000 Hz logarithmisch interpoliert; außerhalb konstant. Keine Luftabsorption, komplexe Reflexionsphase, Quellendirektivität, Möbelabschattung, Beugung oder diffuse Energie. Die ausgegebene Phase ist nur die geometrische Laufzeitphase plus Quellpolarität, kein Materialphasenmodell.
+## Niedrige Frequenzen
 
-SBIR-Nullstellen `f_n=(2n+1)c/(2 Δd)` sind ideale Kandidaten bei gleicher Reflexionsphase. Reflexionspegel und komplexe Materialphase bestimmen tatsächliche Nulltiefe und Lage. Eine mehrfache Reflexion wird als einzelner idealisierter Interferenzkandidat behandelt; alle Pfade werden noch nicht zu einem vollständigen komplexen Übertragungsmodell summiert.
+Die analytische Formel `f_pqr = c/2 sqrt((p/Lx)^2+(q/Ly)^2+(r/Lz)^2)` gilt ausschließlich für einen identifizierten axisparallelen Quader ohne akustische Hindernisse oder offene Verbindungen. Eigenfelder berücksichtigen den tatsächlichen Raumursprung. Keine Übertragung auf L-/U-/runde Räume, keine erfundenen Q-Faktoren.
 
-## Statistischer Nachhall
+Für freie Geometrien gibt es ein explizites 3D-FDTD-Modell der skalaren Wellengleichung. Das freie Luftvolumen wird voxelisiert, solide Boxen ausgeschlossen. Nachbarverbindungen müssen geometrisch sichtbar sein. Fehlende Nachbarn sind starre Neumann-Ränder. Deckungsgleiche gepaarte Wandöffnungen verbinden Zonen; unpaarige Außenöffnungen werden mangels validierter Strahlungsränder abgelehnt.
 
-`T60 = 0.161 V / Σ(S_i α_i)` (Sabine), `f_s = 2000 sqrt(T60/V)`. Sabine setzt ein näherungsweise diffuses Feld voraus; bei niedrigen Frequenzen, hoher Absorption oder stark ungleichmäßigen Materialien eingeschränkt. Keine unabhängige Validierung durch eine Messung. Bei null Absorptionsfläche wird „nicht berechenbar“ angezeigt, kein erfundener endlicher Nachhall.
+`p(n+1) = 2p(n) − p(n−1) + c² Δt² Σ_axis (p_neighbor−p)/Δx_axis² + source(n)`.
 
-## Messdatenanalyse
+CFL: `c Δt sqrt(Σ 1/Δx²) = 0,9`. Mindestens 10 Zellen pro kürzester modellierter Wellenlänge, maximal 40.000 Zellen und 180 Millionen Zell-Zeitschritte. Frequenz 20–300 Hz, Dauer 0,05–1 s; die Dauer muss den Ricker-Quellpuls abdecken. Positionen werden auf die nächstgelegenen freien Zellzentren abgebildet und als solche im Ergebnis dokumentiert. Konvergenz und voxelbedingte Geometriefehler müssen für die konkrete Aufgabe geprüft werden.
 
-Das IR-Maximum ist ein **angenommener**, nicht nachgewiesener Direktschallbeginn. WAV speichert die REW-Timingreferenz nicht; diese wird nicht rekonstruiert. C50/C80 und D50 starten am IR-Maximum. Schwerpunktzeit Ts ist der energieschwerpunktbezogene Zeitpunkt ab diesem Maximum. Energy Time Curve wird nicht als Hilbert-Hüllkurve behauptet; angezeigt werden lineare IR und integrierte Abklingkurve.
+Ausgabe: Empfängerdruck in beliebiger Einheit, normiertes Empfängerspektrum einschließlich Quellpuls, gespeicherte zeitliche Druckfelder mit gemeinsamer Amplitudennormierung. Spektrale Peaks sind keine automatisch bestimmten Eigenmoden. Die Mindest-Spektralauflösung beträgt 1/Dauer. Dieses Modell verwendet **keine Materialdämpfung, Impedanz, absoluten SPL, RT60 oder konstruktionsabhängige Resonatoren**. FDTD und ISM sind noch kein phasenrichtig zusammengeführter wissenschaftlich validierter Breitband-Hybridsolver.
 
-Rückwärtsintegration des quadrierten IR-Signals ergibt die breitbandige Schroeder-Kurve. EDT fit 0…−10 dB, T20 −5…−25 dB, T30 −5…−35 dB; Extrapolation auf 60 dB. Mindestens 10 Fitpunkte, R² ≥ 0.95, ausreichend geschätzter Dynamikbereich (20/35/45 dB), kein Fit im letzten Zehntel der Datei. Fits können trotz dieser Filter durch unpassendes Fenster oder Rauschen verfälscht sein: keine automatische Lundeby-Korrektur und keine bandbegrenzten RT60-Werte. Ein fehlender Fit wird als „—“ ausgegeben. SNR ist Peakenergie relativ zur mittleren Energie der letzten 10 % der IR, ein Indiz, keine normgerechte Hintergrundrauschmessung.
+## Messungen und Nachhall
 
-Phase wird durch ±360° entrollt. Group Delay = `−(1/360) dφ/df` (Sekunden), numerisch aus Nachbarpunkten. Große Abstände oder falsch referenzierte Phasen können die Ableitung verfälschen.
+Sabine `T60 = 0,161 V / Σ A α`, Schroeder `f_s = 2000 sqrt(T60/V)` bleiben Diffusfeld-Schätzungen aus Raumgrenzflächen. Möbelabsorption/Verdrängung ist darin nicht vollständig bilanziert. Nach außen offene Hüllen liefern keine geschlossene-Raum-Schätzung; gekoppelte Räume können mehrteiliges Decay besitzen.
 
-## Evidenz
+Importierte IR: Maximum als **vermuteter** Direktschall, rückwärts integrierte Energie, EDT/T20/T30 mit Mindestpunktzahl, ausreichendem Verlauf, SNR-Indiz und R² ≥0,95. Breitbandig, ohne Rauschkompensation oder automatischen Timingversatz. C50/C80/D50 und Schwerpunktzeit sind aus der gemessenen IR abgeleitet. Hann-STFT mit 1/12-Oktav-Leistungssummen; Pegel relativ zum gemeinsamen Maximum, Zeit ist Fenstermitte im unveränderten Dateizeitbezug. Keine normierte Materialmessung oder automatische Nachweisführung.
 
-- **Measured:** importierte Datenwerte, unabhängig von ihrer unbekannten Kalibrierung.
-- **Calculated:** analytische Modelle oder Kennwerte aus Messdaten. Voraussetzungen explizit benennen; keine erfundene statistische Confidence für deterministische Formeln.
-- **Inferred:** Reflexionszuordnung, Dokumentationsscore und KI-Interpretation.
-
-Reflexionspeaks werden relativ zum IR-Maximum bis 100 ms mit lokaler Spitzenprüfung gesucht. Pfade werden nur bei passender Quell-/Empfängerzuordnung verglichen. Kandidaten innerhalb ±0.5 ms erhalten eine heuristische Rangfolge bis 60/100. Weder Pegel-/Spektralübereinstimmung noch Mehrpunktkonsistenz werden eingerechnet. Mehrere Kandidaten bleiben sichtbar; die Zahlen sind keine Wahrscheinlichkeit und kein Nachweis der verursachenden Fläche.
-
-Der Dokumentationsscore zählt bekannte Metadaten; ein gutes Ergebnis kann eine schlechte Messung nicht zertifizieren. WAV-Vollaussteuerung ist nur ein Clipping-Indiz. Text-Normalisierung erlaubt keine Clipping-Aussage.
-
-Profile lenken den Analysefokus. Es gibt keine vollständig implementierte ITU-R-BS.1116-Prüfung und keine einheitlichen Zielwerte für Regieraum und Konzertsaal.
+Reflexionsabgleich: Zeitfehler innerhalb ±0,5 ms, qualitativ und mehrdeutig. Passende weitere IR-Positionen können zeitliche Konsistenz stützen, wenn Timing und Aufnahmezustand dokumentiert sind. Breitbandige Peakpegel werden nicht fälschlich als einzelbandige Reflexionspegel gleichgesetzt. Keine statistisch kalibrierte Ursachenwahrscheinlichkeit oder aus einem Monosignal sicher bestimmte Einfallsrichtung.

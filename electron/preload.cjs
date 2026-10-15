@@ -1,12 +1,13 @@
 const {contextBridge,ipcRenderer}=require('electron');
 contextBridge.exposeInMainWorld('desktop',Object.freeze({
+  printPdf:(html,fileName)=>ipcRenderer.invoke('report:pdf',html,fileName),
   info:()=>ipcRenderer.invoke('app:info'),
   openProject:()=>ipcRenderer.invoke('project:open'),
   saveProject:content=>ipcRenderer.invoke('project:save',content),
   openChat:report=>ipcRenderer.invoke('chat:browser',report),
   aiStatus:()=>ipcRenderer.invoke('ai:status'),
   setKey:(key,remember)=>ipcRenderer.invoke('ai:key',key,remember),
-  analyze:(report,question,model)=>ipcRenderer.invoke('ai:analyze',report,question,model),
+  analyze:(report,question,model,context)=>ipcRenderer.invoke('ai:analyze',report,question,model,context),
   rewList:port=>ipcRenderer.invoke('rew:list',port),
   updateState:()=>ipcRenderer.invoke('updates:state'),
   checkUpdates:()=>ipcRenderer.invoke('updates:check'),

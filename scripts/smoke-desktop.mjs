@@ -4,6 +4,9 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
+import {buildToolContext} from '../src/core/report.js';
+import {defaultPlanConfig,generatePlan,installPlan,approvePlan,assignMeasurement} from '../src/core/planning.js';
+import {reportHtml} from '../src/core/exports.js';
 import {defaultProject} from '../src/core/project.js';
 const directory=await fs.mkdtemp(path.join(os.tmpdir(),'raumakustik-smoke-'));
 const server=http.createServer((req,res)=>{if(req.url==='/measurements'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify([{id:'test-1',title:'Fixture measurement'}]));}else{res.statusCode=404;res.end();}});
@@ -13,7 +16,7 @@ try{
   app=await electron.launch({args:['.','--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader'],env:{...process.env,XDG_CONFIG_HOME:directory,XDG_CACHE_HOME:directory}});
   const window=await app.firstWindow();const errors=[];window.on('pageerror',e=>errors.push(e.message));
   await window.getByText('Modell · keine Messung',{exact:false}).waitFor();
-  const info=await window.evaluate(()=>window.desktop.info());assert.equal(info.packaged,false);assert.equal(info.version,'0.1.0');
+  const info=await window.evaluate(()=>window.desktop.info());assert.equal(info.packaged,false);assert.equal(info.version,JSON.parse(await fs.readFile(new URL('../package.json',import.meta.url))).version);
   assert.equal(await window.evaluate(()=>typeof window.require),'undefined');assert.equal(await window.evaluate(()=>typeof window.process),'undefined');
   const target=path.join(directory,'saved.raum');
   const contents=JSON.stringify(defaultProject());await fs.writeFile(target,contents);
@@ -41,9 +44,18 @@ try{
   const result=await window.evaluate(()=>window.desktop.analyze('{"Calculated":true}','Prüfe Modellgrenzen','gpt-4.1'));assert.match(result.text,/Fixture/);
   const body=await app.evaluate(()=>globalThis.testAiBody);assert.equal(body.store,false);assert.equal(body.model,'gpt-4.1');assert.equal(body.max_output_tokens,3000);
   assert.ok(body.instructions.includes('du ersetzt ihn nicht'));
+  const pdfTarget=path.join(directory,'fixture-report.pdf');
+  await app.evaluate(({dialog},pdfTarget)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:pdfTarget});},pdfTarget);
+  const html=reportHtml(defaultProject(),null,{planOnly:true});assert.equal(await window.evaluate(html=>window.desktop.printPdf(html,'Messplan.pdf'),html),true);
+  const pdf=await fs.readFile(pdfTarget);assert.equal(pdf.subarray(0,5).toString(),'%PDF-');assert.ok(pdf.length>3000);
+  await app.evaluate(()=>{let round=0;globalThis.fetch=async(_url,opts)=>{const body=JSON.parse(opts.body);globalThis.testToolBody=body;round++;return new Response(JSON.stringify(round===1?{output:[{type:'function_call',call_id:'fixture-call',name:'simulate_object_movement',arguments:JSON.stringify({entity:'source',id:'L',position:[1.4,1.1,1.2]})}]}:{status:'completed',output:[{content:[{type:'output_text',text:'Werkzeugberechnung abgeschlossen; Szenario benötigt Freigabe.'}]}]}),{status:200,headers:{'Content-Type':'application/json'}});};});
+  const plannedProject=defaultProject();installPlan(plannedProject,generatePlan(plannedProject,defaultPlanConfig(plannedProject)));approvePlan(plannedProject);const measured={id:'context-fixture',name:'Fixture FR',kind:'frequency',data:[[20,80],[40,81]],metadata:{}};assignMeasurement(plannedProject,measured,plannedProject.measurementPlan.tasks[0].id);plannedProject.measurements.push(measured);
+  const toolResult=await window.evaluate(context=>window.desktop.analyze('{}','Verwende ein Werkzeug','gpt-4.1',context),buildToolContext(plannedProject));
+  assert.match(toolResult.text,/Freigabe/);assert.equal(toolResult.toolTrace[0].name,'simulate_object_movement');assert.equal(toolResult.proposals[0].acceptedByUser,false);assert.equal(toolResult.proposals[0].model.sources[0].position[0],1.4);
+  const toolBody=await app.evaluate(()=>globalThis.testToolBody);assert.ok(toolBody.input.some(item=>item.type==='function_call_output'));assert.ok(toolBody.tools.some(item=>item.name==='calculate_room_modes'));assert.equal(toolBody.store,false);
   await window.evaluate(()=>window.desktop.setKey('',false));assert.equal((await window.evaluate(()=>window.desktop.aiStatus())).hasKey,false);
   const error=await window.evaluate(async()=>{try{await window.desktop.analyze('{}','x','gpt-4.1');return '';}catch(e){return e.message;}});assert.match(error,/API-Schlüssel/);
   const updateError=await window.evaluate(async()=>{try{await window.desktop.checkUpdates();return '';}catch(e){return e.message;}});assert.match(updateError,/installierten Programm/);
   assert.deepEqual(errors,[]);
-  console.log('Electron-Smoke erfolgreich: produktive file://-Oberfläche, sandbox/contextIsolation, IPC, Projekt speichern/laden, ChatGPT-Clipboard/Browserübergabe, REW-HTTP-Fixture, API-Vertrag mit simuliertem Transport, Schlüssel löschen, Update-Entwicklungsmodus. Keine Live-API oder Windows-DPAPI behauptet.');
+  console.log('Electron-Smoke erfolgreich: produktive file://-Oberfläche, sandbox/contextIsolation, IPC, Projekt speichern/laden, ChatGPT-Clipboard/Browserübergabe, REW-HTTP-Fixture, API-Vertrag mit simuliertem Transport, Schlüssel löschen, Update-Entwicklungsmodus, echte PDF-Erzeugung und Responses-Function-Calling mit separaten Szenariovorschlägen. Keine Live-API oder Windows-DPAPI behauptet.');
 }finally{if(app)await app.close();await new Promise(resolve=>server.close(resolve));await fs.rm(directory,{recursive:true,force:true});}

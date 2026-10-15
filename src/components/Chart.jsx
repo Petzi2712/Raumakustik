@@ -1,9 +1,10 @@
 import React from 'react';
+import {downsampleSeries} from '../core/series.js';
 export default function Chart({data=[],label,xLabel,yLabel,logX=false,color='#5fdbc4',yRange}){
   const finite=data.filter(p=>Number.isFinite(p[0]) && Number.isFinite(p[1]) && (!logX||p[0]>0));
   if(finite.length<2)return <p className="muted">Keine Daten für {label}.</p>;
   const stride=Math.max(1,Math.ceil(finite.length/1400));
-  const sampled=finite.filter((_,i)=>i%stride===0||i===finite.length-1);
+  const sampled=downsampleSeries(finite);
   const tx=x=>logX?Math.log10(x):x;
   const xmin=tx(finite[0][0]),xmax=tx(finite.at(-1)[0]);
   let ymin=yRange?.[0]??finite.reduce((a,p)=>Math.min(a,p[1]),Infinity),ymax=yRange?.[1]??finite.reduce((a,p)=>Math.max(a,p[1]),-Infinity);

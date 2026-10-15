@@ -82,5 +82,5 @@ export function measurementQuality(m, project) {
     checks.push({label:'Sample Rate plausibel',ok:m.sampleRate>=1000 && m.sampleRate<=768000});
   }
   return {score:Math.round(100*checks.filter(c=>c.ok).length/checks.length),checks,
-    evidence:'Inferred', note:'Dokumentationsscore, keine Zertifizierung der Messung. Unbekannte Angaben zählen als ungeprüft; SNR wird separat aus der IR geschätzt.'};
+    evidence:'INFERRED', note:'Dokumentationsscore, keine Zertifizierung der Messung. Unbekannte Angaben zählen als ungeprüft; SNR wird separat aus der IR geschätzt.'};
 }

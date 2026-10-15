@@ -7,3 +7,5 @@ test-results/
 .env
 build/app-files.nsh
 docs/oberflaeche.png
+docs/oberflaeche-v2.png
+docs/raumeditor-v2.png
