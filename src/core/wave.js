@@ -1,4 +1,4 @@
-import {roomBounds,containsPoint,insideObject,boundarySurfaces,visible,acousticPosition,geometrySummary} from './geometry.js';
+import {roomBounds,containsPoint,insideObject,boundarySurfaces,visible,acousticPosition,geometrySummary,geometryFingerprint} from './geometry.js';
 import {soundSpeed} from './acoustics.js';
 // Explicit 3D six-neighbour FDTD on a voxelised free-air domain, rigid Neumann walls.
 // No fitted material losses, no absolute SPL, no invented Q/RT60 from this solver.
@@ -50,5 +50,5 @@ export function simulateWave(project,source,receiver,options={}){
     let re=0,im=0;for(const [t,p] of data){const w=.5-.5*Math.cos(2*Math.PI*t/seconds);re+=p*w*Math.cos(2*Math.PI*f*t);im-=p*w*Math.sin(2*Math.PI*f*t);}spectrum.push([f,Math.hypot(re,im)]);
   }
   const max=Math.max(...spectrum.map(p=>p[1]),1e-30);for(const row of spectrum)row[1]=20*Math.log10(Math.max(row[1]/max,1e-12));
-  return {data,spectrum,frames,positions:grid.positions,cells:grid.positions.length,spacing:grid.spacing,dt:grid.dt,duration:seconds,frequencyResolution:1/seconds,maxFrequency:grid.maxFrequency,sourceCell:grid.positions[si],receiverCell:grid.positions[ri],sourcePulse:{kind:'Ricker',f0,centreSeconds:t0},evidence:'SIMULATED',assumptions:grid.assumptions,geometryFingerprint:geometrySummary(project).volume};
+  return {data,spectrum,frames,positions:grid.positions,cells:grid.positions.length,spacing:grid.spacing,dt:grid.dt,duration:seconds,frequencyResolution:1/seconds,maxFrequency:grid.maxFrequency,sourceCell:grid.positions[si],receiverCell:grid.positions[ri],sourcePulse:{kind:'Ricker',f0,centreSeconds:t0},evidence:'SIMULATED',assumptions:grid.assumptions,geometryFingerprint:geometryFingerprint(project)};
 }

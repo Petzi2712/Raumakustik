@@ -1,6 +1,6 @@
 {
   "name": "raumakustik-digital-twin",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Lokaler 3D-Raumakustik-Arbeitsplatz mit REW-Import",
   "author": "Raumakustik",
   "private": true,

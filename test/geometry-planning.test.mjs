@@ -76,7 +76,7 @@ test('FDTD: starres Quader-Eigenfeld folgt diskreter Wellendispersion und physik
   for(let i=0;i<current.length;i++)near(current[i],initial[i]*Math.cos(omega*grid.dt*100),1e-9);
 });
 test('FDTD in L-Raum ist endlich, begrenzt und verwendet keine Rechteck-Moden',()=>{
-  const p=room('L',[3,4,2.5]);p.sources[0].position=[.7,.7,1];p.receivers[0].position=[.7,3,1];const q=simulateWave(p,p.sources[0],p.receivers[0],{maxFrequency:80,seconds:.25});assert.ok(q.data.length>10);assert.ok(q.data.every(r=>r.every(Number.isFinite)));assert.equal(executeAcousticTool(p,'calculate_room_modes').available,false);assert.throws(()=>makeWaveGrid(p,{maxFrequency:300,maxCells:10}),/Zellen/);
+  const p=room('L',[3,4,2.5]);p.sources[0].position=[.7,.7,1];p.receivers[0].position=[.7,3,1];const q=simulateWave(p,p.sources[0],p.receivers[0],{maxFrequency:80,seconds:.25});assert.equal(typeof q.geometryFingerprint,'string');assert.match(q.geometryFingerprint,/^[a-f0-9]{8}$/);assert.ok(q.data.length>10);assert.ok(q.data.every(r=>r.every(Number.isFinite)));assert.equal(executeAcousticTool(p,'calculate_room_modes').available,false);assert.throws(()=>makeWaveGrid(p,{maxFrequency:300,maxCells:10}),/Zellen/);
 });
 test('KI-Werkzeuge ändern niemals Originalprojekt; unbekannte Materialwerte werden abgelehnt',()=>{
   const p=defaultProject(),before=JSON.stringify(p),result=executeAcousticTool(p,'simulate_object_movement',{entity:'source',id:'L',position:[1.4,1.1,1.2]});assert.equal(JSON.stringify(p),before);assert.equal(result.requiresUserApproval,true);assert.equal(result.proposal.acceptedByUser,false);assert.equal(result.proposal.model.sources[0].position[0],1.4);

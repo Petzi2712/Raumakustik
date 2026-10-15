@@ -1,4 +1,4 @@
-# Verifikation 0.2.0
+# Verifikation 0.2.1
 
 15.10.2026, Linux-Cloud-Umgebung; Fortsetzung der in VERIFICATION.md dokumentierten Basisprüfung.
 
@@ -12,3 +12,5 @@
 - Windows-Build und GitHub-Release werden im Windows-Workflow erstellt. Ein erfolgreich gebauter Installer ist kein Nachweis einer praktisch getesteten Windows-Installation oder eines interaktiven Updates.
 
 Noch offen: reale REW-Version/API, reale Referenzmessungen, Windows-Installieren/Deinstallieren/DPAPI/Upgrade, Signaturvertrauen und der vollständige wissenschaftliche Abnahmekatalog. Der Materialkatalog enthält keine als Labormessung ausgegebenen Schätzwerte. Details der verbleibenden Produktfunktionen: ROADMAP.md.
+
+Patch 0.2.1: Der Geometrie-Fingerprint einer Wellensimulation ist ein Hash des Eingangsmodells, kein Volumenwert. Die Referenzprüfung kontrolliert das Format; die Versionsanzeige folgt dem Paketmanifest.

@@ -1,3 +1,4 @@
+import {version as appVersion} from '../package.json';
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {defaultProject,validateProject,parseProject,updateProvenance,BANDS,SURFACES} from './core/project.js';
 import {parseRewText,parseWav,measurementQuality,QUALITY_FIELDS} from './core/imports.js';
@@ -33,7 +34,7 @@ export default function App(){
   const [activeTaskId,setActiveTaskId]=useState(''),[measurementId,setMeasurementId]=useState(''),[importKind,setImportKind]=useState('frequency'),[timeUnit,setTimeUnit]=useState('seconds');
   const [aiKey,setAiKey]=useState(''),[rememberKey,setRememberKey]=useState(false),[aiStatus,setAiStatus]=useState({hasKey:false,canStore:false});
   const [question,setQuestion]=useState('Welche akustischen Probleme sind belegt, welche nur modelliert, und welche Messungen oder Positionsänderungen sind als Nächstes sinnvoll?');
-  const [model,setModel]=useState('gpt-4.1'),[aiResult,setAiResult]=useState(''),[aiTrace,setAiTrace]=useState([]),[aiProposals,setAiProposals]=useState([]),[aiBusy,setAiBusy]=useState(false),[update,setUpdate]=useState({status:'idle',message:'Noch nicht geprüft.'}),[appInfo,setAppInfo]=useState({version:'0.2.0',packaged:false});
+  const [model,setModel]=useState('gpt-4.1'),[aiResult,setAiResult]=useState(''),[aiTrace,setAiTrace]=useState([]),[aiProposals,setAiProposals]=useState([]),[aiBusy,setAiBusy]=useState(false),[update,setUpdate]=useState({status:'idle',message:'Noch nicht geprüft.'}),[appInfo,setAppInfo]=useState({version:appVersion,packaged:false});
   const [rewPort,setRewPort]=useState(4735),[rewResult,setRewResult]=useState('');
   const measurementFile=useRef(),projectFile=useRef();
   const source=project.sources.find(s=>s.id===sourceId)||project.sources[0],receiver=project.receivers.find(r=>r.id===receiverId)||project.receivers[0];
